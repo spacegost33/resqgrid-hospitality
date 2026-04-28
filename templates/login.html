@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ResQGrid — Login / Register</title>
+<style>
+  :root{
+    --red:#ff2d4e;--blue:#00c6ff;--cyan:#00ffe7;--purple:#a855f7;
+    --bg:#03040e;--glass:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.12);
+    --text:#e8eaf6;--muted:#6672a0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+  canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+  /* ── Layout ── */
+  .page{position:relative;z-index:1;min-height:100vh;display:flex;}
+  .left-panel{
+    flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:60px 40px;
+    background:linear-gradient(135deg,rgba(0,198,255,0.05),rgba(255,45,78,0.05));
+    border-right:1px solid var(--border);
+  }
+  .left-brand{font-size:2.5rem;font-weight:900;letter-spacing:4px;
+    background:linear-gradient(90deg,var(--red),var(--blue));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;}
+  .left-sub{color:var(--muted);font-size:1rem;text-align:center;max-width:320px;line-height:1.7;margin-bottom:40px;}
+  .left-features{display:flex;flex-direction:column;gap:16px;width:100%;max-width:340px;}
+  .lf-item{
+    display:flex;align-items:center;gap:14px;
+    background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:14px 18px;
+    transition:.3s;
+  }
+  .lf-item:hover{border-color:rgba(0,198,255,0.3);background:rgba(0,198,255,0.07);}
+  .lf-icon{font-size:1.5rem;flex-shrink:0;}
+  .lf-text h4{font-size:0.9rem;font-weight:600;margin-bottom:2px;}
+  .lf-text p{font-size:0.78rem;color:var(--muted);}
+
+  .right-panel{
+    width:min(480px,100%);display:flex;flex-direction:column;justify-content:center;
+    padding:60px 48px;
+  }
+
+  /* ── Tabs ── */
+  .tabs{display:flex;gap:0;margin-bottom:32px;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .tab{
+    flex:1;padding:12px;text-align:center;cursor:pointer;font-size:0.9rem;font-weight:600;
+    color:var(--muted);background:transparent;border:none;transition:.3s;
+  }
+  .tab.active{background:linear-gradient(135deg,rgba(0,198,255,0.15),rgba(255,45,78,0.1));color:var(--text);}
+
+  /* ── Form ── */
+  .form-title{font-size:1.6rem;font-weight:800;margin-bottom:6px;}
+  .form-sub{font-size:0.88rem;color:var(--muted);margin-bottom:28px;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:0.82rem;color:var(--muted);margin-bottom:6px;font-weight:600;letter-spacing:.5px;}
+  .field input,.field select{
+    width:100%;padding:12px 16px;
+    background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font-size:0.95rem;outline:none;transition:.3s;
+    -webkit-appearance:none;
+  }
+  .field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,198,255,0.1);}
+  .field select option{background:#0d1020;}
+  .field input::placeholder{color:#3344;}
+
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .btn-submit{
+    width:100%;padding:14px;border:none;border-radius:12px;
+    background:linear-gradient(135deg,var(--red),#ff6b35);
+    color:#fff;font-size:1rem;font-weight:700;cursor:pointer;
+    letter-spacing:1px;transition:.3s;margin-top:8px;
+  }
+  .btn-submit:hover{box-shadow:0 0 30px rgba(255,45,78,0.5);transform:translateY(-1px);}
+  .btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+  .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:#2a3050;font-size:0.8rem;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  .guest-btn{
+    width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;
+    background:transparent;color:var(--muted);font-size:0.9rem;cursor:pointer;transition:.3s;
+    font-weight:600;
+  }
+  .guest-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+  /* OTP section */
+  .otp-box{
+    display:none;background:rgba(0,198,255,0.05);border:1px solid rgba(0,198,255,0.2);
+    border-radius:12px;padding:16px;margin-bottom:16px;
+  }
+  .otp-box.show{display:block;}
+  .otp-row{display:flex;gap:8px;}
+  .otp-row input{flex:1;text-align:center;letter-spacing:8px;font-size:1.2rem;font-weight:700;}
+  .otp-send-btn{
+    padding:12px 16px;border:1px solid rgba(0,198,255,0.3);border-radius:10px;
+    background:rgba(0,198,255,0.1);color:var(--blue);font-size:0.82rem;cursor:pointer;
+    white-space:nowrap;font-weight:600;transition:.3s;
+  }
+  .otp-send-btn:hover{background:rgba(0,198,255,0.2);}
+  .otp-hint{font-size:0.75rem;color:var(--muted);margin-top:6px;}
+  .otp-verified{color:#00ffe7;font-size:0.8rem;font-weight:600;}
+
+  /* Role info */
+  .role-info{
+    background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);
+    border-radius:10px;padding:10px 14px;margin-top:6px;font-size:0.8rem;color:#a855f7;display:none;
+  }
+
+  /* Alerts */
+  .alert{
+    padding:12px 16px;border-radius:10px;font-size:0.88rem;margin-bottom:16px;display:none;
+  }
+  .alert.error{background:rgba(255,45,78,0.1);border:1px solid rgba(255,45,78,0.3);color:#ff6685;}
+  .alert.success{background:rgba(0,255,231,0.08);border:1px solid rgba(0,255,231,0.25);color:var(--cyan);}
+  .alert.show{display:block;}
+
+  /* Spinner */
+  .spinner{
+    display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Role grid */
+  .role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:6px;}
+  .role-chip{
+    padding:8px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.78rem;
+    text-align:center;transition:.3s;color:var(--muted);background:transparent;
+  }
+  .role-chip:hover,.role-chip.selected{border-color:var(--blue);color:var(--blue);background:rgba(0,198,255,0.08);}
+
+  .back-home{
+    position:fixed;top:20px;left:20px;z-index:200;
+    display:flex;align-items:center;gap:6px;color:var(--muted);font-size:0.85rem;
+    text-decoration:none;padding:8px 14px;border:1px solid var(--border);border-radius:50px;
+    background:rgba(3,4,14,0.7);backdrop-filter:blur(12px);transition:.3s;
+  }
+  .back-home:hover{border-color:var(--blue);color:var(--blue);}
+
+  @media(max-width:768px){
+    .left-panel{display:none;}
+    .right-panel{width:100%;padding:80px 24px 40px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<a href="/" class="back-home">← ResQGrid</a>
+
+<div class="page">
+  <!-- Left decorative panel -->
+  <div class="left-panel">
+    <div class="left-brand">⚡ RESQGRID</div>
+    <p class="left-sub">Intelligent Crisis Response for Hospitality Environments</p>
+    <div class="left-features">
+      <div class="lf-item">
+        <span class="lf-icon">🧠</span>
+        <div class="lf-text"><h4>AI-Powered Detection</h4><p>CRISP engine with confidence scoring</p></div>
+      </div>
+      <div class="lf-item">
+        <span class="lf-icon">📡</span>
+        <div class="lf-text"><h4>Mesh Network</h4><p>Works even without central internet</p></div>
+      </div>
+      <div class="lf-item">
+        <span class="lf-icon">🗺️</span>
+        <div class="lf-text"><h4>Live Map + Floor Plans</h4><p>Indoor & outdoor incident tracking</p></div>
+      </div>
+      <div class="lf-item">
+        <span class="lf-icon">🔐</span>
+        <div class="lf-text"><h4>Role-Based Access</h4><p>Admin, Staff, Volunteer, Guest</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="right-panel">
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- ── LOGIN FORM ── -->
+    <div id="form-login">
+      <div class="form-title">Welcome back</div>
+      <p class="form-sub">Sign in to your ResQGrid account</p>
+      <div class="alert" id="login-alert"></div>
+      <div class="field">
+        <label>EMAIL OR PHONE</label>
+        <input type="text" id="l-email" placeholder="admin@resqgrid.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>PASSWORD</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn-submit" id="login-btn" onclick="doLogin()">Sign In →</button>
+      <div class="divider">or continue as</div>
+      <button class="guest-btn" onclick="guestAccess()">👤 Guest Access (No account needed)</button>
+    </div>
+
+    <!-- ── REGISTER FORM ── -->
+    <div id="form-register" style="display:none;">
+      <div class="form-title">Create account</div>
+      <p class="form-sub">Join ResQGrid — admin will approve your role</p>
+      <div class="alert" id="reg-alert"></div>
+
+      <div class="field">
+        <label>FULL NAME *</label>
+        <input type="text" id="r-name" placeholder="Your full name"/>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>EMAIL</label>
+          <input type="email" id="r-email" placeholder="you@hotel.com" oninput="checkEmail()"/>
+        </div>
+        <div class="field">
+          <label>PHONE</label>
+          <input type="tel" id="r-phone" placeholder="+91 9876543210"/>
+        </div>
+      </div>
+
+      <!-- OTP box (shows when email entered) -->
+      <div class="otp-box" id="otp-box">
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;font-weight:600;">EMAIL VERIFICATION</div>
+        <div class="otp-row">
+          <input type="text" id="otp-input" placeholder="000000" maxlength="6"/>
+          <button class="otp-send-btn" id="otp-btn" onclick="sendOTP()">Send OTP</button>
+        </div>
+        <div class="otp-hint" id="otp-hint">Enter your email above, then click Send OTP</div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>DATE OF BIRTH</label>
+          <input type="date" id="r-dob"/>
+        </div>
+        <div class="field">
+          <label>PASSWORD *</label>
+          <input type="password" id="r-pass" placeholder="Min 6 chars"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>REQUESTED ROLE</label>
+        <div class="role-grid" id="role-grid"></div>
+        <div class="role-info" id="role-info"></div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>FLOOR</label>
+          <select id="r-floor">
+            <option>Basement</option><option selected>Floor 1</option><option>Floor 2</option>
+            <option>Floor 3</option><option>Floor 4</option><option>Floor 5</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ZONE</label>
+          <select id="r-zone">
+            <option>General</option><option>Lobby</option><option>Kitchen</option>
+            <option>Parking</option><option>Pool</option><option>Conference</option><option>Rooms</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>ROOM NUMBER (optional)</label>
+        <input type="text" id="r-room" placeholder="e.g. 204"/>
+      </div>
+
+      <button class="btn-submit" id="reg-btn" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// ── Canvas BG ─────────────────────────────────────────────────
+const c = document.getElementById('bg'), cx = c.getContext('2d');
+let W, H; const pts = [];
+function rsz(){ W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+rsz(); window.addEventListener('resize', rsz);
+for(let i=0;i<50;i++) pts.push({x:Math.random()*2000,y:Math.random()*1200,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5,p:Math.random()*Math.PI*2});
+function drawBG(){
+  cx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.p+=.025;
+    if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+    const a=(Math.sin(p.p)*.25+.4)*.5;
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(0,198,255,${a})`;cx.fill();
+  });
+  requestAnimationFrame(drawBG);
+}
+drawBG();
+
+// ── Roles ─────────────────────────────────────────────────────
+const DISPLAY_ROLES = [
+  {id:'security_guard',label:'Security Guard',dept:'Security'},
+  {id:'security_lead',label:'Security Lead',dept:'Security'},
+  {id:'medical_officer',label:'Medical Officer',dept:'Medical'},
+  {id:'first_aid',label:'First Aid',dept:'Medical'},
+  {id:'emergency_coord',label:'Emergency Coord.',dept:'Management'},
+  {id:'floor_manager',label:'Floor Manager',dept:'Management'},
+  {id:'maintenance_lead',label:'Maintenance Lead',dept:'Maintenance'},
+  {id:'fire_safety',label:'Fire Safety Officer',dept:'Safety'},
+  {id:'fire_marshal',label:'Fire Marshal',dept:'Safety'},
+  {id:'front_desk',label:'Front Desk',dept:'Operations'},
+  {id:'housekeeping_lead',label:'Housekeeping Lead',dept:'Housekeeping'},
+  {id:'guest',label:'Guest',dept:'Guest'},
+];
+let selectedRole = 'guest';
+const rg = document.getElementById('role-grid');
+DISPLAY_ROLES.forEach(r => {
+  const chip = document.createElement('div');
+  chip.className = 'role-chip' + (r.id==='guest'?' selected':'');
+  chip.textContent = r.label;
+  chip.dataset.id = r.id; chip.dataset.dept = r.dept;
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('selected'));
+    chip.classList.add('selected');
+    selectedRole = r.id;
+    const ri = document.getElementById('role-info');
+    ri.style.display = 'block';
+    ri.textContent = r.id === 'guest' ? '👤 Guest access — can report incidents only' :
+      `🔐 Requesting: ${r.label} (${r.dept}) — Admin approval required`;
+  });
+  rg.appendChild(chip);
+});
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(t) {
+  document.getElementById('form-login').style.display = t==='login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = t==='register' ? 'block' : 'none';
+  document.getElementById('tab-login').className = 'tab' + (t==='login'?' active':'');
+  document.getElementById('tab-register').className = 'tab' + (t==='register'?' active':'');
+}
+
+// ── Alert ─────────────────────────────────────────────────────
+function showAlert(id, msg, type='error') {
+  const el = document.getElementById(id);
+  el.className = `alert ${type} show`;
+  el.textContent = msg;
+  setTimeout(()=>el.classList.remove('show'), 6000);
+}
+
+// ── OTP ───────────────────────────────────────────────────────
+let otpVerified = false, otpTimer;
+function checkEmail() {
+  const email = document.getElementById('r-email').value.trim();
+  const box = document.getElementById('otp-box');
+  if (email.includes('@')) { box.classList.add('show'); }
+  else { box.classList.remove('show'); otpVerified = false; }
+}
+async function sendOTP() {
+  const email = document.getElementById('r-email').value.trim();
+  if (!email.includes('@')) { showAlert('reg-alert','Enter valid email first'); return; }
+  const btn = document.getElementById('otp-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const res = await fetch('/api/auth/send-otp', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
+  const data = await res.json();
+  btn.textContent = 'Resend'; btn.disabled = false;
+  if (data.success) {
+    document.getElementById('otp-hint').textContent = '✅ OTP sent! Check your inbox (or console if email not configured)';
+    startOTPWatch(email);
+  } else { document.getElementById('otp-hint').textContent = '❌ ' + data.error; }
+}
+function startOTPWatch(email) {
+  clearInterval(otpTimer);
+  otpTimer = setInterval(async () => {
+    const otp = document.getElementById('otp-input').value.trim();
+    if (otp.length !== 6) return;
+    const res = await fetch('/api/auth/verify-otp', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,otp}) });
+    const data = await res.json();
+    if (data.verified) {
+      clearInterval(otpTimer); otpVerified = true;
+      document.getElementById('otp-hint').innerHTML = '<span class="otp-verified">✅ Email verified!</span>';
+      document.getElementById('otp-input').style.borderColor = '#00ffe7';
+    }
+  }, 800);
+}
+
+// ── Login ─────────────────────────────────────────────────────
+async function doLogin() {
+  const emailOrPhone = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-pass').value;
+  if (!emailOrPhone || !password) { showAlert('login-alert','All fields required'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  const res = await fetch('/api/auth/login', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({emailOrPhone, password})
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('rqg_token', data.token);
+    localStorage.setItem('rqg_user', JSON.stringify(data.user));
+    const dest = data.user.isAdmin ? '/admin' : '/dashboard';
+    window.location.href = dest;
+  } else {
+    showAlert('login-alert', data.error || 'Login failed');
+    btn.disabled = false; btn.textContent = 'Sign In →';
+  }
+}
+
+// ── Guest ─────────────────────────────────────────────────────
+function guestAccess() {
+  localStorage.removeItem('rqg_token');
+  localStorage.removeItem('rqg_user');
+  window.location.href = '/dashboard';
+}
+
+// ── Register ──────────────────────────────────────────────────
+async function doRegister() {
+  const name = document.getElementById('r-name').value.trim();
+  const email = document.getElementById('r-email').value.trim() || null;
+  const phone = document.getElementById('r-phone').value.trim() || null;
+  const dob = document.getElementById('r-dob').value || null;
+  const password = document.getElementById('r-pass').value;
+  const floor = document.getElementById('r-floor').value;
+  const zone = document.getElementById('r-zone').value;
+  const roomNumber = document.getElementById('r-room').value || null;
+  if (!name) { showAlert('reg-alert','Name required'); return; }
+  if (!email && !phone) { showAlert('reg-alert','Email or phone required'); return; }
+  if (password.length < 6) { showAlert('reg-alert','Password must be ≥ 6 chars'); return; }
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Creating account...';
+  const res = await fetch('/api/auth/register', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name, email, phone, dob, password, role: selectedRole, floor, zone, roomNumber, otpVerified})
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('rqg_token', data.token);
+    localStorage.setItem('rqg_user', JSON.stringify(data.user));
+    showAlert('reg-alert', `✅ Account created! ${selectedRole !== 'guest' ? 'Role request sent to admin.' : ''}`, 'success');
+    setTimeout(()=> window.location.href = data.user.isAdmin ? '/admin' : '/dashboard', 1500);
+  } else {
+    showAlert('reg-alert', data.error || 'Registration failed');
+    btn.disabled = false; btn.textContent = 'Create Account →';
+  }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const loginForm = document.getElementById('form-login');
+  if (loginForm.style.display !== 'none') doLogin();
+  else doRegister();
+});
+
+// Auto-redirect if already logged in
+const tok = localStorage.getItem('rqg_token');
+const usr = JSON.parse(localStorage.getItem('rqg_user') || 'null');
+if (tok && usr) { window.location.href = usr.isAdmin ? '/admin' : '/dashboard'; }
+</script>
+</body>
+</html>

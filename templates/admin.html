@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ResQGrid — Admin Dashboard</title>
+<style>
+:root{
+  --red:#ff2d4e;--blue:#00c6ff;--cyan:#00ffe7;--purple:#a855f7;--orange:#ff9500;
+  --bg:#030410;--glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.09);
+  --text:#e8eaf6;--muted:#5566aa;--success:#00e676;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+/* Topbar */
+.topbar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(3,4,14,0.98);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
+.brand{font-weight:900;font-size:1.1rem;letter-spacing:3px;background:linear-gradient(90deg,var(--red),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.admin-badge{font-size:.7rem;background:rgba(168,85,247,.15);color:var(--purple);border:1px solid rgba(168,85,247,.3);border-radius:50px;padding:2px 10px;margin-left:8px;letter-spacing:1px;font-weight:700;}
+.topbar-tabs{display:flex;gap:2px;}
+.ttab{padding:6px 14px;border:none;background:transparent;color:var(--muted);font-size:.82rem;cursor:pointer;border-radius:8px;transition:.25s;font-weight:600;}
+.ttab.active{background:rgba(168,85,247,.12);color:var(--purple);}
+.ttab:hover:not(.active){background:var(--glass);color:var(--text);}
+.topbar-right{display:flex;align-items:center;gap:10px;font-size:.82rem;}
+.online-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid rgba(0,230,118,.2);border-radius:50px;color:var(--success);background:rgba(0,230,118,.05);}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-sm{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--muted);cursor:pointer;transition:.25s;font-size:.8rem;}
+.btn-sm:hover{border-color:var(--blue);color:var(--blue);}
+.btn-danger{border-color:rgba(255,45,78,.3);color:var(--red);background:rgba(255,45,78,.05);}
+.btn-danger:hover{background:rgba(255,45,78,.1);}
+/* Layout */
+.main-wrap{flex:1;display:flex;overflow:hidden;}
+.sidebar{width:240px;flex-shrink:0;border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;background:rgba(4,6,18,.7);}
+.content{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;}
+/* Panels */
+.panel{background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:14px;transition:.3s;}
+.panel:hover{border-color:rgba(168,85,247,.2);}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pt{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.badge{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:700;}
+.badge-ok{background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);}
+.badge-purple{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.25);}
+.badge-blue{background:rgba(0,198,255,.1);color:var(--blue);border:1px solid rgba(0,198,255,.2);}
+.badge-red{background:rgba(255,45,78,.1);color:var(--red);border:1px solid rgba(255,45,78,.2);}
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.stat-box{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;transition:.3s;}
+.stat-box:hover{border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.05);}
+.sv{font-size:2rem;font-weight:800;line-height:1;}
+.sv.red{color:var(--red);}.sv.blue{color:var(--blue);}.sv.cyan{color:var(--cyan);}
+.sv.green{color:var(--success);}.sv.purple{color:var(--purple);}.sv.orange{color:var(--orange);}
+.sl{font-size:.68rem;color:var(--muted);margin-top:4px;}
+/* Incident cards */
+.inc-list{display:flex;flex-direction:column;gap:8px;}
+.inc-card{background:rgba(8,12,32,.9);border:1px solid var(--border);border-radius:12px;padding:12px 14px;transition:.3s;position:relative;overflow:hidden;}
+.inc-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;}
+.inc-card.CRITICAL::before{background:var(--red);box-shadow:0 0 10px var(--red);}
+.inc-card.MEDIUM::before{background:var(--orange);}
+.inc-card.LOW::before{background:var(--blue);}
+.inc-card.RESOLVED::before{background:var(--success);}
+.inc-card:hover{border-color:rgba(168,85,247,.25);box-shadow:0 4px 16px rgba(0,0,0,.3);}
+.inc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.inc-msg{font-size:.85rem;font-weight:600;flex:1;line-height:1.4;}
+.pp{font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;letter-spacing:1px;}
+.pp.CRITICAL{background:rgba(255,45,78,.15);color:var(--red);border:1px solid rgba(255,45,78,.3);}
+.pp.MEDIUM{background:rgba(255,149,0,.12);color:var(--orange);border:1px solid rgba(255,149,0,.3);}
+.pp.LOW{background:rgba(0,198,255,.1);color:var(--blue);border:1px solid rgba(0,198,255,.2);}
+.pp.RESOLVED,.pp.FALSE_ALARM{background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);}
+.inc-meta{display:flex;flex-wrap:wrap;gap:5px;font-size:.7rem;color:var(--muted);}
+.mc{background:rgba(255,255,255,.03);border-radius:6px;padding:2px 7px;}
+.inc-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.abtn{padding:5px 12px;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;transition:.25s;border:1px solid;}
+.abtn:hover{filter:brightness(1.3);}
+.abtn-respond{background:rgba(0,198,255,.1);color:var(--blue);border-color:rgba(0,198,255,.3);}
+.abtn-resolve{background:rgba(0,230,118,.1);color:var(--success);border-color:rgba(0,230,118,.3);}
+.abtn-false{background:rgba(255,149,0,.1);color:var(--orange);border-color:rgba(255,149,0,.3);}
+.abtn-detail{background:var(--glass);color:var(--muted);border-color:var(--border);}
+/* User table */
+.user-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+.user-table th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:700;font-size:.7rem;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+.user-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.user-table tr:hover td{background:rgba(168,85,247,.04);}
+.role-select{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:.75rem;cursor:pointer;outline:none;}
+.role-select:focus{border-color:var(--purple);}
+.role-select option{background:#0d1020;}
+.del-btn{padding:3px 8px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;border:1px solid rgba(255,45,78,.25);background:rgba(255,45,78,.07);color:var(--red);transition:.25s;}
+.del-btn:hover{background:rgba(255,45,78,.15);}
+/* Graph */
+.graph-wrap{height:180px;position:relative;}
+canvas.gcanvas{width:100%;height:100%;}
+/* Floor map */
+.map-tabs{display:flex;gap:4px;margin-bottom:12px;}
+.mtab{padding:4px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:.25s;}
+.mtab.active{background:rgba(168,85,247,.1);color:var(--purple);border-color:rgba(168,85,247,.3);}
+.floor-controls{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.fbtn{padding:4px 10px;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:.25s;}
+.fbtn.active{background:rgba(0,198,255,.12);color:var(--blue);border-color:rgba(0,198,255,.3);}
+#adm-floor-svg{background:rgba(5,10,25,.8);border-radius:12px;border:1px solid var(--border);overflow:auto;height:270px;}
+#adm-gmap-wrap{height:300px;border-radius:12px;overflow:hidden;display:none;}
+/* Mesh */
+.mesh-wrap{height:200px;}
+canvas.mesh-canvas{width:100%;height:100%;}
+/* Pending */
+.pending-item{display:flex;align-items:center;justify-content:space-between;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:10px;padding:10px 14px;margin-bottom:8px;gap:8px;}
+.pi-info h4{font-size:.85rem;font-weight:600;margin-bottom:2px;}
+.pi-info p{font-size:.75rem;color:var(--muted);}
+.pi-approve{padding:5px 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,var(--purple),#6d28d9);color:#fff;transition:.25s;}
+.pi-approve:hover{box-shadow:0 0 16px rgba(168,85,247,.4);}
+.pi-deny{padding:5px 10px;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid rgba(255,45,78,.3);background:transparent;color:var(--red);transition:.25s;}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:#07091e;border:1px solid var(--border);border-radius:18px;padding:24px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--glass);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:.25s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:.78rem;color:var(--muted);margin-bottom:16px;}
+.tl-item{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.tl-icon{font-size:1.1rem;flex-shrink:0;}
+.tl-event{font-size:.72rem;font-weight:700;color:var(--muted);}
+.tl-desc{font-size:.82rem;}
+.tl-ts{font-size:.68rem;color:#2a3450;}
+/* Toast */
+.toast-wrap{position:fixed;top:66px;right:18px;z-index:600;display:flex;flex-direction:column;gap:7px;}
+.toast{background:#0b1030;border:1px solid var(--border);border-radius:12px;padding:11px 14px;font-size:.82rem;min-width:260px;animation:slideIn .25s ease;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.toast.critical{border-color:rgba(255,45,78,.4);}
+.toast.success{border-color:rgba(0,230,118,.3);}
+.toast-title{font-weight:700;margin-bottom:2px;}
+.toast-body{color:var(--muted);font-size:.77rem;}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:translateX(0);}}
+/* Siren */
+.siren-overlay{position:fixed;inset:0;z-index:400;pointer-events:none;border:4px solid var(--red);animation:sirenF .5s ease-in-out infinite;display:none;}
+.siren-overlay.active{display:block;}
+@keyframes sirenF{0%,100%{box-shadow:inset 0 0 40px rgba(255,45,78,.1);}50%{box-shadow:inset 0 0 80px rgba(255,45,78,.4);}}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px;}
+.info-box{background:rgba(0,198,255,.05);border:1px solid rgba(0,198,255,.2);border-radius:10px;padding:12px 14px;font-size:.82rem;line-height:1.6;margin-bottom:12px;}
+.signal-chip{background:rgba(255,45,78,.1);color:var(--red);border:1px solid rgba(255,45,78,.2);border-radius:6px;padding:2px 8px;font-size:.72rem;display:inline-block;margin:2px;}
+.relay-path{font-size:.8rem;color:var(--blue);padding:8px 12px;background:rgba(0,198,255,.05);border-radius:8px;margin-top:6px;}
+@media(max-width:900px){.sidebar{display:none;}.stats-row{grid-template-columns:repeat(2,1fr);}.topbar-tabs{display:none;}}
+</style>
+</head>
+<body>
+<div class="siren-overlay" id="siren"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:6px;">
+    <a href="/admin" class="brand" style="text-decoration:none;background:linear-gradient(90deg,var(--red),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⚡ RESQGRID</a>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="topbar-tabs">
+    <button class="ttab active" onclick="setPage('overview')">📊 Overview</button>
+    <button class="ttab" onclick="setPage('incidents')">🚨 Incidents</button>
+    <button class="ttab" onclick="setPage('map')">🗺️ Map</button>
+    <button class="ttab" onclick="setPage('users')">👥 Users</button>
+    <button class="ttab" onclick="setPage('pending')">⏳ Pending</button>
+  </div>
+  <div class="topbar-right">
+    <div class="online-pill"><span class="online-dot"></span><span id="onlineCount">0 online</span></div>
+    <span id="adminName" style="color:var(--muted);font-size:.82rem;">Admin</span>
+    <button class="btn-sm" id="autoDetectBtn" onclick="toggleAutoDetect()">🤖 Auto: ON</button>
+    <button class="btn-sm" onclick="triggerDemo()">🎬 Demo</button>
+    <button class="btn-sm btn-danger" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="main-wrap">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="panel">
+      <div class="ph"><span class="pt">⚡ Quick Actions</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="abtn abtn-respond" style="text-align:left;padding:8px 12px;" onclick="setPage('incidents')">🚨 View All Incidents</button>
+        <button class="abtn abtn-resolve" style="text-align:left;padding:8px 12px;" onclick="setPage('pending')">⏳ Approve Roles</button>
+        <button class="abtn abtn-detail" style="text-align:left;padding:8px 12px;" onclick="setPage('users')">👥 Manage Users</button>
+        <button class="abtn" style="text-align:left;padding:8px 12px;border-color:rgba(168,85,247,.3);color:var(--purple);background:rgba(168,85,247,.08);" onclick="setPage('map')">🗺️ Live Map</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="pt">📊 Live Stats</span><span class="badge badge-ok">LIVE</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="stat-box"><div class="sv red" id="ss-active">0</div><div class="sl">ACTIVE</div></div>
+        <div class="stat-box"><div class="sv blue" id="ss-respond">0</div><div class="sl">RESPONDING</div></div>
+        <div class="stat-box"><div class="sv green" id="ss-resolved">0</div><div class="sl">RESOLVED</div></div>
+        <div class="stat-box"><div class="sv purple" id="ss-pending">0</div><div class="sl">PENDING ROLES</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="pt">📡 Mesh Status</span></div>
+      <div style="font-size:.8rem;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Devices</span><span style="color:var(--cyan);">12</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Resilience</span><span style="color:var(--success);">85%</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Avg Delay</span><span style="color:var(--blue);">180ms</span></div>
+        <div style="height:3px;border-radius:2px;background:linear-gradient(90deg,var(--success),var(--cyan));margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div id="page-overview" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="stats-row">
+        <div class="stat-box"><div class="sv red" id="sv-active">0</div><div class="sl">ACTIVE INCIDENTS</div></div>
+        <div class="stat-box"><div class="sv blue" id="sv-respond">0</div><div class="sl">RESPONDING</div></div>
+        <div class="stat-box"><div class="sv green" id="sv-resolved">0</div><div class="sl">RESOLVED</div></div>
+        <div class="stat-box"><div class="sv cyan" id="sv-total">0</div><div class="sl">TOTAL</div></div>
+        <div class="stat-box"><div class="sv orange" id="sv-critical">0</div><div class="sl">CRITICAL</div></div>
+        <div class="stat-box"><div class="sv purple" id="sv-users">0</div><div class="sl">USERS</div></div>
+        <div class="stat-box"><div class="sv blue" id="sv-online">0</div><div class="sl">ONLINE</div></div>
+        <div class="stat-box"><div class="sv green" id="sv-avail">0</div><div class="sl">RESPONDERS</div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><span class="pt">📈 Confidence Timeline</span><span class="badge badge-ok">LIVE</span></div>
+        <div class="graph-wrap"><canvas id="adm-graph" class="gcanvas"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><span class="pt">📡 Mesh Network</span><span class="badge badge-blue">3D</span></div>
+        <div class="mesh-wrap"><canvas id="adm-mesh" class="mesh-canvas"></canvas></div>
+      </div>
+      <!-- Recent incidents preview -->
+      <div class="panel">
+        <div class="ph"><span class="pt">🔴 Recent Active</span><span class="badge badge-red" id="ov-badge">0</span></div>
+        <div class="inc-list" id="ov-inc-list"></div>
+      </div>
+    </div>
+
+    <!-- INCIDENTS -->
+    <div id="page-incidents" style="display:none;flex-direction:column;gap:14px;">
+      <div class="panel">
+        <div class="ph">
+          <span class="pt">🚨 All Incidents</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <select id="inc-filter" onchange="renderAdmIncidents()" style="background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:.75rem;">
+              <option value="">All Status</option>
+              <option value="ACTIVE">Active</option><option value="RESPONDING">Responding</option><option value="RESOLVED">Resolved</option>
+            </select>
+            <select id="pri-filter" onchange="renderAdmIncidents()" style="background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:.75rem;">
+              <option value="">All Priority</option><option value="CRITICAL">Critical</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="inc-list" id="adm-inc-list"><div style="text-align:center;color:var(--muted);padding:40px;">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div id="page-map" style="display:none;flex-direction:column;gap:14px;">
+      <div class="panel">
+        <div class="ph"><span class="pt">🗺️ Incident Map</span></div>
+        <div class="map-tabs">
+          <button class="mtab active" onclick="setAdmMapView('floor')">🏨 Floor Plan</button>
+          <button class="mtab" onclick="setAdmMapView('google')">🌍 Google Maps</button>
+        </div>
+        <div id="adm-floor-wrap">
+          <div class="floor-controls">
+            <button class="fbtn active" onclick="setAdmFloor('B')">Basement</button>
+            <button class="fbtn" onclick="setAdmFloor('1')">Floor 1</button>
+            <button class="fbtn" onclick="setAdmFloor('2')">Floor 2</button>
+            <button class="fbtn" onclick="setAdmFloor('3')">Floor 3</button>
+            <button class="fbtn" onclick="setAdmFloor('4')">Floor 4</button>
+            <div style="flex:1;text-align:right;font-size:.72rem;color:var(--muted);">🔴 Critical &nbsp;🟠 Medium &nbsp;🔵 Low</div>
+          </div>
+          <div id="adm-floor-svg"></div>
+        </div>
+        <div id="adm-gmap-wrap"><div id="adm-gmap" style="width:100%;height:100%;"></div></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="page-users" style="display:none;flex-direction:column;gap:14px;">
+      <div class="panel">
+        <div class="ph">
+          <span class="pt">👥 All Users</span>
+          <input id="user-search" type="text" placeholder="Search name/email..." oninput="filterUsers()"
+            style="background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:.78rem;outline:none;width:180px;"/>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="user-table">
+            <thead><tr>
+              <th>Name</th><th>Email/Phone</th><th>Role</th><th>Dept</th><th>Resolved</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="user-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDING -->
+    <div id="page-pending" style="display:none;flex-direction:column;gap:14px;">
+      <div class="panel">
+        <div class="ph"><span class="pt">⏳ Pending Role Requests</span><span class="badge badge-purple" id="pendingBadge">0</span></div>
+        <div id="pending-list"><div style="text-align:center;color:var(--muted);padding:40px;">Loading...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// ── IST Time helper ─────────────────────────────────────────
+function fmtIST(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr.replace(' ','T'));
+    const ist = new Date(d.getTime() + (5*60+30)*60*1000);
+    return ist.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',hour12:true}) + ' IST';
+  } catch { return dateStr; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATE & HELPERS
+// ═══════════════════════════════════════════════════════════
+let token = localStorage.getItem('rqg_token') || '';
+let currentUser = JSON.parse(localStorage.getItem('rqg_user') || 'null');
+let allIncidents = [], allUsers = [], sirenActive = false;
+let graphData = [], meshTime = 0, meshPulses = [];
+let admFloor = '1', autoDetectOn = true, admGmap = null, admGmarkers = [];
+let currentPage = 'overview';
+
+const API = (path, opts = {}) => fetch(path, {
+  ...opts,
+  headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token, ...(opts.headers || {}) }
+});
+const $ = id => document.getElementById(id);
+
+const ROLES = [
+  { id: 'security_lead', label: 'Security Lead', department: 'Security' },
+  { id: 'security_guard', label: 'Security Guard', department: 'Security' },
+  { id: 'security_patrol', label: 'Security Patrol', department: 'Security' },
+  { id: 'medical_officer', label: 'Medical Officer', department: 'Medical' },
+  { id: 'first_aid', label: 'First Aid', department: 'Medical' },
+  { id: 'nurse', label: 'Nurse', department: 'Medical' },
+  { id: 'emergency_coord', label: 'Emergency Coord.', department: 'Management' },
+  { id: 'general_manager', label: 'General Manager', department: 'Management' },
+  { id: 'floor_manager', label: 'Floor Manager', department: 'Management' },
+  { id: 'duty_manager', label: 'Duty Manager', department: 'Management' },
+  { id: 'fire_safety', label: 'Fire Safety Officer', department: 'Safety' },
+  { id: 'fire_marshal', label: 'Fire Marshal', department: 'Safety' },
+  { id: 'evacuation_lead', label: 'Evacuation Lead', department: 'Safety' },
+  { id: 'maintenance_lead', label: 'Maintenance Lead', department: 'Maintenance' },
+  { id: 'maintenance_tech', label: 'Maintenance Tech', department: 'Maintenance' },
+  { id: 'housekeeping_lead', label: 'Housekeeping Lead', department: 'Housekeeping' },
+  { id: 'front_desk', label: 'Front Desk', department: 'Operations' },
+  { id: 'concierge', label: 'Concierge', department: 'Operations' },
+  { id: 'guest', label: 'Guest', department: 'Guest' },
+];
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  if (!token) { window.location.href = '/login'; return; }
+  const res = await API('/api/auth/me');
+  if (!res.ok) { window.location.href = '/login'; return; }
+  currentUser = await res.json();
+  if (!currentUser.isAdmin) { window.location.href = '/dashboard'; return; }
+  $('adminName').textContent = currentUser.name;
+  connectSocket();
+  await loadAll();
+  startGraphLoop();
+  drawAdmMesh();
+  renderAdmFloor(admFloor);
+  setInterval(loadAll, 10000);
+  // Load Google Maps key
+  const cfgRes = await fetch('/api/config');
+  if (cfgRes.ok) {
+    const cfg = await cfgRes.json();
+    if (cfg.mapsKey && cfg.mapsKey.length > 5) {
+      const s = document.createElement('script');
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.mapsKey}`;
+      document.head.appendChild(s);
+    }
+  }
+}
+
+async function loadAll() {
+  await Promise.all([loadStats(), loadIncidents(), loadUsers(), loadPending()]);
+}
+
+function doLogout() {
+  API('/api/auth/logout', { method: 'POST' });
+  localStorage.clear();
+  window.location.href = '/login';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SOCKET
+// ═══════════════════════════════════════════════════════════
+let socket;
+function connectSocket() {
+  socket = io({ transports: ['websocket', 'polling'] });
+  socket.on('connect', () => socket.emit('identify', { token }));
+  socket.on('initial-incidents', incs => { allIncidents = incs; renderAdmIncidents(); renderOvIncidents(); renderAdmFloor(admFloor); });
+  socket.on('new-incident', inc => {
+    allIncidents.unshift(inc);
+    renderAdmIncidents(); renderOvIncidents(); renderAdmFloor(admFloor);
+    toast('🚨 New Incident', inc.message, inc.priority === 'CRITICAL' ? 'critical' : 'info');
+    if (inc.priority === 'CRITICAL') startSiren();
+    checkSiren();
+    updateLiveStatsFromData();
+  });
+  socket.on('incident-updated', inc => {
+    const i = allIncidents.findIndex(x => x.id === inc.id);
+    if (i >= 0) allIncidents[i] = inc;
+    renderAdmIncidents(); renderOvIncidents(); renderAdmFloor(admFloor);
+    checkSiren();
+    updateLiveStatsFromData();
+  });
+  socket.on('users-update', users => { allUsers = users; renderUsers(); });
+  socket.on('online-users', ou => { $('onlineCount').textContent = ou.length + ' online'; });
+  socket.on('autodetect-status', d => {
+    autoDetectOn = d.enabled;
+    $('autoDetectBtn').textContent = '🤖 Auto: ' + (d.enabled ? 'ON' : 'OFF');
+  });
+  socket.on('auto-detection', d => toast('🤖 Sensor Alert', d.message, 'info'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// PAGE SWITCHING
+// ═══════════════════════════════════════════════════════════
+const PAGES = ['overview', 'incidents', 'map', 'users', 'pending'];
+function setPage(p) {
+  currentPage = p;
+  PAGES.forEach(pg => {
+    const el = $('page-' + pg);
+    el.style.display = pg === p ? 'flex' : 'none';
+    el.style.flexDirection = 'column';
+  });
+  document.querySelectorAll('.ttab').forEach((b, i) => b.classList.toggle('active', PAGES[i] === p));
+  if (p === 'map') { renderAdmFloor(admFloor); initAdmGmap(); }
+  if (p === 'incidents') renderAdmIncidents();
+  if (p === 'users') renderUsers();
+  if (p === 'pending') renderPending();
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════
+function updateLiveStatsFromData() {
+  // Live stats from in-memory data — instant update without API call
+  const active     = allIncidents.filter(i=>i.status==='ACTIVE').length;
+  const responding = allIncidents.filter(i=>i.status==='RESPONDING').length;
+  const resolved   = allIncidents.filter(i=>i.status==='RESOLVED'||i.status==='FALSE_ALARM').length;
+  const total      = allIncidents.length;
+  const critical   = allIncidents.filter(i=>i.priority==='CRITICAL'&&i.status!=='RESOLVED').length;
+  if($('sv-active'))   $('sv-active').textContent   = active;
+  if($('sv-respond'))  $('sv-respond').textContent  = responding;
+  if($('sv-resolved')) $('sv-resolved').textContent = resolved;
+  if($('sv-total'))    $('sv-total').textContent    = total;
+  if($('sv-critical')) $('sv-critical').textContent = critical;
+  if($('ss-active'))   $('ss-active').textContent   = active;
+  if($('ss-respond'))  $('ss-respond').textContent  = responding;
+  if($('ss-resolved')) $('ss-resolved').textContent = resolved;
+}
+
+async function loadStats() {
+  const res = await API('/api/stats'); if (!res.ok) return;
+  const d = await res.json();
+  $('sv-active').textContent = d.incidents.active;
+  $('sv-respond').textContent = d.incidents.responding;
+  $('sv-resolved').textContent = d.incidents.resolved;
+  $('sv-total').textContent = d.incidents.total;
+  $('sv-critical').textContent = d.incidents.critical;
+  $('sv-users').textContent = d.users.total;
+  $('sv-online').textContent = d.users.online;
+  $('sv-avail').textContent = d.users.available;
+  $('ss-active').textContent = d.incidents.active;
+  $('ss-respond').textContent = d.incidents.responding;
+  $('ss-resolved').textContent = d.incidents.resolved;
+  $('ss-pending').textContent = d.users.pending;
+}
+
+// ═══════════════════════════════════════════════════════════
+// INCIDENTS
+// ═══════════════════════════════════════════════════════════
+async function loadIncidents() {
+  const res = await API('/api/incidents'); if (!res.ok) return;
+  allIncidents = await res.json();
+  renderAdmIncidents(); renderOvIncidents();
+}
+
+function renderOvIncidents() {
+  const active = allIncidents.filter(i => i.status !== 'RESOLVED' && i.status !== 'FALSE_ALARM').slice(0, 5);
+  const badge = $('ov-badge');
+  if (badge) badge.textContent = active.length;
+  const list = $('ov-inc-list');
+  if (!list) return;
+  if (!active.length) { list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem;">✅ No active incidents</div>'; return; }
+  list.innerHTML = active.map(inc => buildIncCard(inc, true)).join('');
+}
+
+function renderAdmIncidents() {
+  const statusF = $('inc-filter')?.value || '';
+  const priF = $('pri-filter')?.value || '';
+  let list = [...allIncidents];
+  if (statusF) list = list.filter(i => i.status === statusF);
+  if (priF) list = list.filter(i => i.priority === priF);
+  const el = $('adm-inc-list'); if (!el) return;
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;">No incidents found</div>'; return; }
+  el.innerHTML = list.map(inc => buildIncCard(inc, false)).join('');
+}
+
+function buildIncCard(inc, compact) {
+  const p = inc.priority || 'LOW';
+  const isResolved = inc.status === 'RESOLVED' || inc.status === 'FALSE_ALARM';
+  const statusClass = isResolved ? 'RESOLVED' : p;
+  const ppClass = isResolved ? (inc.status || 'RESOLVED') : p;
+  const actions = isResolved
+    ? `<button class="abtn abtn-detail" onclick="showDetail(${inc.id})">📋 Details</button>`
+    : `<button class="abtn abtn-respond" onclick="admUpdateStatus(${inc.id},'RESPONDING')">🔵 Responding</button>
+       <button class="abtn abtn-resolve" onclick="admUpdateStatus(${inc.id},'RESOLVED')">✅ Resolve</button>
+       <button class="abtn abtn-false" onclick="admUpdateStatus(${inc.id},'FALSE_ALARM')">⚪ False Alarm</button>
+       <button class="abtn abtn-detail" onclick="showDetail(${inc.id})">📋 Details</button>`;
+  return `<div class="inc-card ${statusClass}">
+    <div class="inc-top">
+      <div class="inc-msg">${inc.message}</div>
+      <span class="pp ${ppClass}">${ppClass}</span>
+    </div>
+    <div class="inc-meta">
+      <span class="mc">📍 ${inc.location || '?'}</span>
+      <span class="mc">🕐 ${inc.time || ''}</span>
+      <span class="mc">🧠 ${inc.confidence}%</span>
+      <span class="mc">${inc.status}</span>
+      ${inc.responder ? `<span class="mc">👤 ${inc.responder.name}</span>` : ''}
+    </div>
+    <div class="inc-actions">${actions}</div>
+  </div>`;
+}
+
+// KEY FIX: Admin can now update ANY incident status
+async function admUpdateStatus(incId, status) {
+  const res = await API(`/api/incidents/${incId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, note: 'Admin action via dashboard' })
+  });
+  if (res.ok) {
+    const updated = await res.json();
+    const i = allIncidents.findIndex(x => x.id === incId);
+    if (i >= 0) allIncidents[i] = updated;
+    renderAdmIncidents(); renderOvIncidents(); renderAdmFloor(admFloor);
+    if (status === 'RESOLVED' || status === 'FALSE_ALARM') { stopSiren(); toast('✅ Resolved', `Incident #${incId} → ${status}`, 'success'); }
+    else toast('🔵 Updated', `Incident #${incId} → ${status}`, 'info');
+  } else {
+    const err = await res.json().catch(() => ({}));
+    toast('❌ Error', err.error || 'Update failed', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════════════════════
+async function loadUsers() {
+  const res = await API('/api/users'); if (!res.ok) return;
+  allUsers = await res.json();
+  renderUsers();
+}
+
+function filterUsers() {
+  const q = ($('user-search')?.value || '').toLowerCase();
+  const filtered = q ? allUsers.filter(u => (u.name + u.email + u.role).toLowerCase().includes(q)) : allUsers;
+  renderUsersTable(filtered);
+}
+
+function renderUsers() { renderUsersTable(allUsers); }
+
+function renderUsersTable(users) {
+  const tbody = $('user-tbody'); if (!tbody) return;
+  tbody.innerHTML = users.map(u => `<tr>
+    <td><b>${u.name}</b>${u.isAdmin ? '<span style="font-size:.65rem;color:var(--purple);margin-left:4px;">[ADMIN]</span>' : ''}</td>
+    <td style="color:var(--muted);font-size:.75rem;">${u.email || u.phone || '—'}</td>
+    <td>
+      <select class="role-select" onchange="assignRole('${u.id}',this.value)" ${u.isAdmin ? 'disabled' : ''}>
+        ${ROLES.map(r => `<option value="${r.id}" ${u.role === r.id ? 'selected' : ''}>${r.label}</option>`).join('')}
+      </select>
+    </td>
+    <td style="color:var(--muted);font-size:.75rem;">${u.department || '—'}</td>
+    <td style="text-align:center;color:var(--success);">${u.resolvedCount || 0}</td>
+    <td>${!u.isAdmin ? `<button class="del-btn" onclick="deleteUser('${u.id}','${u.name}')">🗑️ Delete</button>` : '—'}</td>
+  </tr>`).join('');
+}
+
+async function assignRole(userId, newRole) {
+  const res = await API('/api/admin/assign-role', { method: 'POST', body: JSON.stringify({ targetUserId: userId, newRole }) });
+  if (res.ok) { await loadUsers(); toast('✅ Role Updated', `Changed to ${newRole}`, 'success'); }
+  else { const err = await res.json(); toast('❌ Error', err.error || 'Failed', 'error'); }
+}
+
+async function deleteUser(userId, name) {
+  if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+  const res = await API(`/api/admin/delete-user/${userId}`, { method: 'DELETE' });
+  if (res.ok) { await loadUsers(); toast('🗑️ Deleted', `${name} removed`, 'success'); }
+  else toast('❌ Error', 'Delete failed', 'error');
+}
+
+// ═══════════════════════════════════════════════════════════
+// PENDING ROLES
+// ═══════════════════════════════════════════════════════════
+async function loadPending() {
+  const res = await API('/api/admin/pending-users'); if (!res.ok) return;
+  const users = await res.json();
+  $('pendingBadge').textContent = users.length;
+  renderPendingList(users);
+}
+
+function renderPending() { loadPending(); }
+
+function renderPendingList(users) {
+  const el = $('pending-list'); if (!el) return;
+  if (!users.length) { el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;">✅ No pending role requests</div>'; return; }
+  el.innerHTML = users.map(u => `<div class="pending-item">
+    <div class="pi-info">
+      <h4>${u.name}</h4>
+      <p>${u.email || u.phone || '—'} · Requesting: <b style="color:var(--purple);">${u.requestedRole || u.role}</b></p>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="pi-approve" onclick="approveRole('${u.id}','${u.requestedRole || u.role}')">✅ Approve</button>
+      <button class="pi-deny" onclick="assignRole('${u.id}','guest')">✗ Keep as Guest</button>
+    </div>
+  </div>`).join('');
+}
+
+async function approveRole(userId, role) {
+  const res = await API('/api/admin/assign-role', { method: 'POST', body: JSON.stringify({ targetUserId: userId, newRole: role }) });
+  if (res.ok) { await loadPending(); await loadUsers(); toast('✅ Role Approved', `User granted ${role}`, 'success'); }
+  else toast('❌ Error', 'Approval failed', 'error');
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTO DETECT / DEMO
+// ═══════════════════════════════════════════════════════════
+async function toggleAutoDetect() {
+  const res = await API('/api/autodetect/toggle', { method: 'POST' });
+  if (res.ok) { const d = await res.json(); toast(d.enabled ? '🤖 Auto ON' : '🤖 Auto OFF', '', 'info'); }
+}
+
+async function triggerDemo() {
+  await API('/api/autodetect/trigger', { method: 'POST' });
+  toast('🎬 Demo triggered', 'Showing on all dashboards', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+// GRAPH
+// ═══════════════════════════════════════════════════════════
+function startGraphLoop() { drawAdmGraph(); setInterval(drawAdmGraph, 2500); }
+
+function drawAdmGraph() {
+  const canvas = $('adm-graph'); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 700;
+  canvas.height = canvas.offsetHeight || 180;
+  const W = canvas.width, H = canvas.height;
+  const active = allIncidents.filter(i => i.status !== 'RESOLVED' && i.status !== 'FALSE_ALARM');
+  const maxConf = active.length ? Math.max(...active.map(i => i.confidence)) : 0;
+  graphData.push(maxConf);
+  if (graphData.length > 60) graphData.shift();
+  ctx.clearRect(0, 0, W, H);
+  // BG gradient
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(0, 0, W, H);
+  // Horizontal guide lines only (no vertical scan lines per request)
+  [25, 50, 75, 100].forEach(v => {
+    const y = H - (v / 100) * H;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '9px monospace';
+    ctx.fillText(v + '%', 4, y - 3);
+  });
+  // Threshold lines
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(255,165,0,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H - 0.5 * H); ctx.lineTo(W, H - 0.5 * H); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,45,78,0.25)';
+  ctx.beginPath(); ctx.moveTo(0, H - 0.8 * H); ctx.lineTo(W, H - 0.8 * H); ctx.stroke();
+  ctx.setLineDash([]);
+  if (graphData.length < 2) return;
+  const pts = graphData.map((v, i) => ({ x: (i / (graphData.length - 1)) * W, y: H - (v / 100) * H }));
+  // Gradient fill
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, 'rgba(168,85,247,0.35)');
+  grd.addColorStop(1, 'rgba(168,85,247,0.01)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const cpx = (pts[i - 1].x + pts[i].x) / 2;
+    ctx.bezierCurveTo(cpx, pts[i - 1].y, cpx, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = grd; ctx.fill();
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const cpx = (pts[i - 1].x + pts[i].x) / 2;
+    ctx.bezierCurveTo(cpx, pts[i - 1].y, cpx, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 2.5; ctx.stroke();
+  // Glowing end dot
+  const last = pts[pts.length - 1];
+  [{ r: 12, alpha: 0.15 }, { r: 6, alpha: 0.4 }, { r: 4, alpha: 1 }].forEach(({ r, alpha }) => {
+    ctx.beginPath(); ctx.arc(last.x, last.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(168,85,247,${alpha})`; ctx.fill();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// FLOOR MAP (SVG — Option A, no cost, works offline)
+// ═══════════════════════════════════════════════════════════
+const FLOORS = {
+  'B': { label: 'Basement', rooms: [
+    { id: 'parking', x: 20, y: 30, w: 200, h: 120, label: 'Parking' },
+    { id: 'utility', x: 240, y: 30, w: 120, h: 55, label: 'Utility Room' },
+    { id: 'boiler', x: 240, y: 105, w: 120, h: 45, label: 'Boiler Room' },
+    { id: 'storage', x: 380, y: 30, w: 100, h: 120, label: 'Storage' },
+  ]},
+  '1': { label: 'Floor 1', rooms: [
+    { id: 'lobby', x: 20, y: 20, w: 180, h: 100, label: 'Lobby' },
+    { id: 'reception', x: 220, y: 20, w: 120, h: 55, label: 'Reception' },
+    { id: 'restaurant', x: 220, y: 90, w: 120, h: 80, label: 'Restaurant' },
+    { id: 'kitchen', x: 360, y: 90, w: 120, h: 80, label: 'Kitchen' },
+    { id: 'corridor', x: 20, y: 140, w: 320, h: 25, label: 'Main Corridor' },
+    { id: 'rm101', x: 20, y: 185, w: 70, h: 60, label: '101' },
+    { id: 'rm102', x: 100, y: 185, w: 70, h: 60, label: '102' },
+    { id: 'rm103', x: 180, y: 185, w: 70, h: 60, label: '103' },
+    { id: 'rm104', x: 260, y: 185, w: 70, h: 60, label: '104' },
+  ]},
+  '2': { label: 'Floor 2', rooms: [
+    { id: 'corridor2', x: 20, y: 20, w: 460, h: 25, label: 'Corridor' },
+    { id: 'rm201', x: 20, y: 65, w: 70, h: 60, label: '201' }, { id: 'rm202', x: 100, y: 65, w: 70, h: 60, label: '202' },
+    { id: 'rm203', x: 180, y: 65, w: 70, h: 60, label: '203' }, { id: 'rm204', x: 260, y: 65, w: 70, h: 60, label: '204' },
+    { id: 'rm205', x: 340, y: 65, w: 70, h: 60, label: '205' }, { id: 'rm206', x: 420, y: 65, w: 60, h: 60, label: '206' },
+    { id: 'rm211', x: 20, y: 155, w: 70, h: 60, label: '211' }, { id: 'rm212', x: 100, y: 155, w: 70, h: 60, label: '212' },
+    { id: 'rm213', x: 180, y: 155, w: 70, h: 60, label: '213' }, { id: 'rm214', x: 260, y: 155, w: 70, h: 60, label: '214' },
+    { id: 'westwing', x: 380, y: 155, w: 100, h: 60, label: 'West Wing' },
+  ]},
+  '3': { label: 'Floor 3', rooms: [
+    { id: 'confhall', x: 20, y: 20, w: 240, h: 160, label: 'Conference Hall' },
+    { id: 'board', x: 280, y: 20, w: 100, h: 80, label: 'Board Room' },
+    { id: 'breakout', x: 400, y: 20, w: 80, h: 80, label: 'Breakout' },
+    { id: 'rm301', x: 280, y: 120, w: 100, h: 60, label: '301' },
+    { id: 'rm302', x: 400, y: 120, w: 80, h: 60, label: '302' },
+  ]},
+  '4': { label: 'Floor 4', rooms: [
+    { id: 'corridor4', x: 20, y: 20, w: 460, h: 25, label: 'Corridor' },
+    { id: 'rm401', x: 20, y: 65, w: 70, h: 60, label: '401' }, { id: 'rm402', x: 100, y: 65, w: 70, h: 60, label: '402' },
+    { id: 'rm403', x: 180, y: 65, w: 70, h: 60, label: '403' }, { id: 'rm404', x: 260, y: 65, w: 70, h: 60, label: '404' },
+    { id: 'rm405', x: 340, y: 65, w: 70, h: 60, label: '405' }, { id: 'rm406', x: 420, y: 65, w: 60, h: 60, label: '406' },
+    { id: 'suite', x: 20, y: 155, w: 200, h: 80, label: 'Executive Suite' },
+    { id: 'skylounge', x: 240, y: 155, w: 160, h: 80, label: 'Sky Lounge' },
+  ]}
+};
+
+function setAdmFloor(f) {
+  admFloor = f;
+  document.querySelectorAll('.fbtn').forEach((b, i) => b.classList.toggle('active', ['B', '1', '2', '3', '4'][i] === f));
+  renderAdmFloor(f);
+}
+
+function renderAdmFloor(floor) {
+  const fl = FLOORS[floor]; if (!fl) return;
+  const container = $('adm-floor-svg'); if (!container) return;
+  const floorKey = floor === 'B' ? 'basement' : 'floor ' + floor;
+  const floorIncs = allIncidents.filter(i => {
+    if (i.status === 'RESOLVED' || i.status === 'FALSE_ALARM') return false;
+    const loc = (i.location || '').toLowerCase();
+    return loc.includes(floorKey) || loc.includes('floor ' + floor);
+  });
+  const roomColors = {};
+  floorIncs.forEach(inc => {
+    const loc = (inc.location || '').toLowerCase();
+    fl.rooms.forEach(r => {
+      if (loc.includes(r.label.toLowerCase()) || loc.includes('rm' + r.label) || loc.includes('room ' + r.label)) {
+        const col = inc.priority === 'CRITICAL' ? { f: 'rgba(255,45,78,0.4)', s: '#ff2d4e', glow: true }
+          : inc.priority === 'MEDIUM' ? { f: 'rgba(255,149,0,0.3)', s: '#ff9500', glow: false }
+          : { f: 'rgba(0,198,255,0.2)', s: '#00c6ff', glow: false };
+        roomColors[r.id] = col;
+      }
+    });
+  });
+  const svgW = 510, svgH = 280;
+  let svg = `<svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}">
+  <defs>
+    <filter id="glow-f"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <text x="${svgW / 2}" y="14" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-size="10" font-family="monospace">${fl.label.toUpperCase()}</text>`;
+  fl.rooms.forEach(r => {
+    const c = roomColors[r.id];
+    const fill = c ? c.f : 'rgba(255,255,255,0.025)';
+    const stroke = c ? c.s : 'rgba(255,255,255,0.08)';
+    const filter = c?.glow ? 'filter="url(#glow-f)"' : '';
+    const lbl = r.label.length > 8 ? r.label.substring(0, 8) : r.label;
+    svg += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${c ? 2 : 1}" ${filter}/>
+    <text x="${r.x + r.w / 2}" y="${r.y + r.h / 2 + 4}" text-anchor="middle" fill="${c ? stroke : 'rgba(255,255,255,0.3)'}" font-size="${r.w < 60 ? 8 : 10}" font-family="monospace" font-weight="${c ? 700 : 400}">${lbl}</text>`;
+    if (c) svg += `<circle cx="${r.x + r.w - 9}" cy="${r.y + 9}" r="5" fill="${stroke}" opacity="0.9" ${filter}/>`;
+  });
+  // Incident legend
+  floorIncs.slice(0, 5).forEach((inc, i) => {
+    const col = inc.priority === 'CRITICAL' ? '#ff2d4e' : inc.priority === 'MEDIUM' ? '#ff9500' : '#00c6ff';
+    svg += `<text x="10" y="${svgH - 8 - i * 15}" fill="${col}" font-size="9" font-family="monospace">● ${inc.message.substring(0, 38)}</text>`;
+  });
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+// ═══════════════════════════════════════════════════════════
+// GOOGLE MAP
+// ═══════════════════════════════════════════════════════════
+function setAdmMapView(view) {
+  document.querySelectorAll('.mtab').forEach((b, i) => b.classList.toggle('active', ['floor', 'google'][i] === view));
+  $('adm-floor-wrap').style.display = view === 'floor' ? 'block' : 'none';
+  $('adm-gmap-wrap').style.display = view === 'google' ? 'block' : 'none';
+  if (view === 'google') initAdmGmap();
+}
+
+function initAdmGmap() {
+  if (admGmap || typeof google === 'undefined') return;
+  admGmap = new google.maps.Map($('adm-gmap'), {
+    center: { lat: 12.9716, lng: 77.5946 }, zoom: 15,
+    styles: [
+      { elementType: 'geometry', stylers: [{ color: '#0d1020' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#8892b0' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a2040' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0a1628' }] }
+    ]
+  });
+  placeAdmGMapMarkers();
+}
+
+function placeAdmGMapMarkers() {
+  if (!admGmap) return;
+  admGmarkers.forEach(m => m.setMap(null)); admGmarkers = [];
+  const base = { lat: 12.9716, lng: 77.5946 };
+  allIncidents.filter(i => i.status !== 'RESOLVED').forEach((inc, idx) => {
+    const pos = { lat: base.lat + (idx * 0.0005), lng: base.lng + (idx * 0.0004) };
+    const col = inc.priority === 'CRITICAL' ? '#ff2d4e' : inc.priority === 'MEDIUM' ? '#ff9500' : '#00c6ff';
+    const marker = new google.maps.Marker({
+      position: pos, map: admGmap, title: inc.message,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 14, fillColor: col, fillOpacity: 0.9, strokeColor: '#fff', strokeWeight: 2 }
+    });
+    const info = new google.maps.InfoWindow({
+      content: `<div style="background:#0d1020;color:#e8eaf6;padding:12px;border-radius:8px;min-width:220px;">
+        <b style="color:${col}">${inc.priority}</b> · #${inc.id}<br/>${inc.message}<br/><small style="color:#556">${inc.location || ''}</small>
+        <br/><small>Confidence: ${inc.confidence}%</small></div>`
+    });
+    marker.addListener('click', () => info.open(admGmap, marker));
+    admGmarkers.push(marker);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// MESH VISUALIZATION (3D style, no scan lines)
+// ═══════════════════════════════════════════════════════════
+const MESH_NODES = [
+  { id: 'hub', label: 'Control Room', x: .5, y: .08, type: 'hub' },
+  { id: 'sec', label: 'Security Desk', x: .12, y: .35, type: 'security' },
+  { id: 'front', label: 'Front Desk', x: .5, y: .35, type: 'staff' },
+  { id: 'med', label: 'Medical Bay', x: .88, y: .35, type: 'medical' },
+  { id: 'f1', label: 'Floor 1', x: .2, y: .65, type: 'floor' },
+  { id: 'f2', label: 'Floor 2', x: .4, y: .72, type: 'floor' },
+  { id: 'f3', label: 'Floor 3', x: .6, y: .72, type: 'floor' },
+  { id: 'f4', label: 'Floor 4', x: .8, y: .62, type: 'floor' },
+  { id: 'bsm', label: 'Basement', x: .35, y: .9, type: 'floor' },
+];
+const MESH_LINKS = [
+  ['hub', 'sec'], ['hub', 'front'], ['hub', 'med'],
+  ['front', 'f1'], ['front', 'f2'], ['front', 'f3'], ['med', 'f4'], ['sec', 'bsm'],
+  ['f1', 'f2'], ['f2', 'f3'], ['f3', 'f4'], ['f1', 'bsm']
+];
+
+function drawAdmMesh() {
+  const canvas = $('adm-mesh'); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 700;
+  canvas.height = canvas.offsetHeight || 200;
+  const W = canvas.width, H = canvas.height;
+  meshTime += 0.025;
+  if (Math.random() < 0.05) {
+    const link = MESH_LINKS[Math.floor(Math.random() * MESH_LINKS.length)];
+    meshPulses.push({ from: link[0], to: link[1], t: 0, col: Math.random() < .15 ? '#ff2d4e' : '#a855f7' });
+  }
+  meshPulses = meshPulses.filter(p => { p.t += 0.018; return p.t < 1; });
+  ctx.clearRect(0, 0, W, H);
+  const getPos = id => { const n = MESH_NODES.find(x => x.id === id); return { x: n.x * W, y: n.y * H }; };
+  // Draw links
+  MESH_LINKS.forEach(([a, b]) => {
+    const p1 = getPos(a), p2 = getPos(b);
+    const grd = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+    grd.addColorStop(0, 'rgba(168,85,247,0.15)'); grd.addColorStop(1, 'rgba(0,198,255,0.08)');
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = grd; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+  // Draw pulses
+  meshPulses.forEach(p => {
+    const from = getPos(p.from), to = getPos(p.to);
+    const x = from.x + (to.x - from.x) * p.t, y = from.y + (to.y - from.y) * p.t;
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, 10);
+    grd.addColorStop(0, p.col); grd.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = grd; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = p.col; ctx.fill();
+  });
+  // Draw nodes with 3D feel
+  MESH_NODES.forEach(n => {
+    const px = n.x * W, py = n.y * H;
+    const pulse = Math.sin(meshTime * 2 + px * 0.01) * 0.3 + 0.8;
+    const col = n.type === 'hub' ? '#a855f7' : n.type === 'medical' ? '#00e676' : n.type === 'security' ? '#ff9500' : '#00c6ff';
+    const r = n.type === 'hub' ? 16 : 11;
+    // Outer glow ring
+    const grd2 = ctx.createRadialGradient(px, py, r * 0.5, px, py, r * 3);
+    grd2.addColorStop(0, col + '55'); grd2.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(px, py, r * 3, 0, Math.PI * 2);
+    ctx.fillStyle = grd2; ctx.fill();
+    // Main circle (gradient for 3D effect)
+    const ballGrd = ctx.createRadialGradient(px - r * .3, py - r * .3, r * .1, px, py, r);
+    ballGrd.addColorStop(0, col + 'ff'); ballGrd.addColorStop(0.6, col + 'cc'); ballGrd.addColorStop(1, col + '55');
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = ballGrd; ctx.fill();
+    // Highlight (top-left shine)
+    ctx.beginPath(); ctx.arc(px - r * .3, py - r * .3, r * .35, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
+    // Border
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = `${n.type === 'hub' ? 10 : 8.5}px monospace`; ctx.textAlign = 'center';
+    ctx.fillText(n.label, px, py + r + 13);
+  });
+  requestAnimationFrame(drawAdmMesh);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIREN
+// ═══════════════════════════════════════════════════════════
+function checkSiren() {
+  const hasCritical = allIncidents.some(i => i.priority === 'CRITICAL' && i.status !== 'RESOLVED' && i.status !== 'FALSE_ALARM');
+  if (hasCritical && !sirenActive) startSiren();
+  else if (!hasCritical) stopSiren();
+}
+function startSiren() {
+  if (sirenActive) return;
+  sirenActive = true;
+  $('siren').classList.add('active');
+}
+function stopSiren() {
+  sirenActive = false;
+  $('siren').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DETAIL MODAL
+// ═══════════════════════════════════════════════════════════
+async function showDetail(incId) {
+  const res = await API(`/api/incidents/${incId}`);
+  if (!res.ok) return;
+  const inc = await res.json();
+  const p = inc.priority || 'LOW';
+  const col = p === 'CRITICAL' ? '#ff2d4e' : p === 'MEDIUM' ? '#ff9500' : '#00c6ff';
+  $('modal-title').textContent = `Incident #${inc.id} — ${p}`;
+  $('modal-sub').textContent = `${inc.location || 'Unknown'} · ${inc.status} · ${inc.confidence}% confidence`;
+  const isResolved = inc.status === 'RESOLVED' || inc.status === 'FALSE_ALARM';
+  $('modal-body').innerHTML = `
+    <div class="info-box">${inc.systemAnalysis || inc.explanation || 'No analysis available'}</div>
+    <div style="margin-bottom:12px;">${(inc.matchedSignals || []).map(s => `<span class="signal-chip">${s}</span>`).join('')}</div>
+    ${inc.responder ? `<div class="info-box"><b>👤 Responder:</b> ${inc.responder.name} (${inc.responder.role})<br/><b>Status:</b> ${inc.responder.status} · ETA: ${inc.responder.etaSeconds}s</div>` : ''}
+    ${!isResolved ? `<div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="abtn abtn-respond" onclick="admUpdateStatus(${inc.id},'RESPONDING');closeModal()">🔵 Mark Responding</button>
+      <button class="abtn abtn-resolve" onclick="admUpdateStatus(${inc.id},'RESOLVED');closeModal()">✅ Mark Resolved</button>
+      <button class="abtn abtn-false" onclick="admUpdateStatus(${inc.id},'FALSE_ALARM');closeModal()">⚪ False Alarm</button>
+    </div>` : ''}
+    <div style="font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:8px;">📋 TIMELINE</div>
+    ${(inc.timeline || []).map(t => `<div class="tl-item">
+      <span class="tl-icon">${t.icon}</span>
+      <div><div class="tl-event">${t.event}</div><div class="tl-desc">${t.description}</div><div class="tl-ts">${t.actor} · ${t.timestamp}</div></div>
+    </div>`).join('')}
+    <div class="relay-path">📡 ${(inc.relay || []).join(' → ')} (${inc.relayTotalDelay}ms)</div>`;
+  $('detailModal').classList.add('show');
+}
+function closeModal() { $('detailModal').classList.remove('show'); }
+$('detailModal').addEventListener('click', e => { if (e.target === $('detailModal')) closeModal(); });
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(title, body, type = 'info') {
+  const wrap = $('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type === 'critical' ? 'critical' : type === 'success' ? 'success' : '');
+  el.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body || ''}</div>`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+init();
+</script>
+</body>
+</html>
