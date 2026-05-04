@@ -57,6 +57,7 @@ def execute(sql, args=()):
 
 def init_db():
     with sqlite3.connect(DB_PATH) as db:
+        pass123 = hash_password('123123')
         db.execute("PRAGMA journal_mode=WAL")
         db.execute("PRAGMA foreign_keys=ON")
         schema_path = os.path.join(os.path.dirname(__file__), 'database', 'schema.sql')
@@ -66,7 +67,7 @@ def init_db():
         db.execute("""INSERT INTO users
                 (id,name,email,role,role_label,department,password_hash,is_admin,is_verified,is_guest,can_respond,can_resolve,status)
                 VALUES(?,?,?,?,?,?,?,1,1,0,1,1,'active')""",
-                ('012','Tejas','tejas@gmail.com','guest','Guest','Guest','123123'))
+                ('012','Tejas','tejas@gmail.com','guest','Guest','Guest',pass123))
         db.commit()
         if not admin:
             aid = 'admin_' + secrets.token_hex(4)
