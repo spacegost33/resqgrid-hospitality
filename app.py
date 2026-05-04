@@ -71,7 +71,7 @@ def init_db():
                 (id,name,email,role,role_label,department,password_hash,is_admin,is_verified,is_guest,can_respond,can_resolve,status)
                 VALUES(?,?,?,?,?,?,?,1,1,0,1,1,'active')""",
                 (aid,'Admin','admin@resqgrid.com','admin','System Admin','Admin',phash)
-                (012,'Tejas','tejas@gmail.com','guest','Guest','Guest',pass123))
+                ('012','Tejas','tejas@gmail.com','guest','Guest','Guest',pass123))
             db.commit()
             print("✅ Admin created: admin@resqgrid.com / admin123")
         print(f"✅ Database ready: {DB_PATH}")
