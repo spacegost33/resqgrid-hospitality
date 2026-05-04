@@ -66,12 +66,10 @@ def init_db():
         if not admin:
             aid = 'admin_' + secrets.token_hex(4)
             phash = hash_password('admin123')
-            pass123 = hash_password('123123')
             db.execute("""INSERT INTO users
                 (id,name,email,role,role_label,department,password_hash,is_admin,is_verified,is_guest,can_respond,can_resolve,status)
                 VALUES(?,?,?,?,?,?,?,1,1,0,1,1,'active')""",
-                (aid,'Admin','admin@resqgrid.com','admin','System Admin','Admin',phash)
-                ('012','Tejas','tejas@gmail.com','guest','Guest','Guest',pass123))
+                (aid,'Admin','admin@resqgrid.com','admin','System Admin','Admin',phash))
             db.commit()
             print("✅ Admin created: admin@resqgrid.com / admin123")
         print(f"✅ Database ready: {DB_PATH}")
