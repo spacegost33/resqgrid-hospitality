@@ -63,6 +63,11 @@ def init_db():
         schema = open(schema_path).read()
         db.executescript(schema)
         admin = db.execute("SELECT id FROM users WHERE is_admin=1").fetchone()
+        db.execute("""INSERT INTO users
+                (id,name,email,role,role_label,department,password_hash,is_admin,is_verified,is_guest,can_respond,can_resolve,status)
+                VALUES(?,?,?,?,?,?,?,1,1,0,1,1,'active')""",
+                ('012','Tejas','tejas@gmail.com','guest','Guest','Guest','123123'))
+        db.commit()
         if not admin:
             aid = 'admin_' + secrets.token_hex(4)
             phash = hash_password('admin123')
